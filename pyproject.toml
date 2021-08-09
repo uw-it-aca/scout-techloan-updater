@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "scout-techloan-updater"
+version = "0.1.0"
+description = "Scout techloan updater"
+authors = ["UW-IT AXDD <aca-it@uw.edu>"]
+keywords = ["daemon"]
+readme = "README.md"
+homepage = "https://github.com/uw-it-aca/scout-techloan-updater.git"
+repository = "https://github.com/uw-it-aca/scout-techloan-updater.git"
+packages = [
+    { include = "*.py" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+[tool.poetry.dependencies]
+authlib = "^0.15"
+requests = "^2.26"
+schema = "^0.7"
+python = "^3.6"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
