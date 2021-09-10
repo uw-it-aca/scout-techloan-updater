@@ -29,20 +29,26 @@ class Techloan:
             }],
         },
     }, ignore_extra_keys=True)
-    
+
     _url = 'https://www.cte.uw.edu/tools/techloan/api/v2/type/?embed=availability&embed=class'
     
-    def __init__(self, entries):
-        self.entries = []
-        for entry in entries:
+    def __init__(self, equipments):
+        self.equipments = []
+        for equipment in equipments:
             try:
-                self._scheme.validate(entry)
-                self.entries.append(entry)
+                self._scheme.validate(equipment)
+                self.equipments.append(equipment)
             except Exception as ex:
-                logger.warning("Bad data retrieved from the techloan " + str(ex) + " from " + json.dumps(entry))
-    
+                logger.warning("Bad data retrieved from the techloan " + str(ex) + " from " + json.dumps(equipment))
+
+    def equipments_for_spot(self, spot):
+        return filter(
+            lambda equipment: equipment["equipment_location_id"] == int(spot["extended_info"]["cte_techloan_id"]),
+            self.equipments,
+        )
+
     @classmethod
     def from_fetch(cls) -> 'Techloan':
-        entries = requests.get(cls._url).json()
-        return cls(entries)
+        equipments = requests.get(cls._url).json()
+        return cls(equipments)
         
