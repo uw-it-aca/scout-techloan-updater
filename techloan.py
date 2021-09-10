@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Iterator
 
 import requests
 from schema import Schema, Or
@@ -41,14 +42,14 @@ class Techloan:
             except Exception as ex:
                 logger.warning("Bad data retrieved from the techloan " + str(ex) + " from " + json.dumps(equipment))
 
-    def equipments_for_spot(self, spot):
+    def equipments_for_spot(self, spot) -> Iterator:
         return filter(
             lambda equipment: equipment["equipment_location_id"] == int(spot["extended_info"]["cte_techloan_id"]),
             self.equipments,
         )
 
     @classmethod
-    def from_fetch(cls) -> 'Techloan':
+    def from_cte_api(cls) -> 'Techloan':
         equipments = requests.get(cls._url).json()
         return cls(equipments)
         

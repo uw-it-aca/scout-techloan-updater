@@ -81,8 +81,9 @@ class Spots:
     _url = '{}/api/v1/spot'
     _filter = 'extended_info:app_type=tech&extended_info:has_cte_techloan=true&limit=0'
 
-    def __init__(self, spots_json_arr, config):
-        self.config = config
+    def __init__(self, spots_json_arr, config, oauth):
+        self._config = config
+        self._oauth = oauth
         self.spots = []
         for spot in spots_json_arr:
             try:
@@ -120,18 +121,14 @@ class Spots:
                 sync_equipment_to_item(equipment, item)
 
     def upload_data(self):
-        client_oauth = OAuth1(
-            'client_key',
-            resource_owner_key=self.config['SS_WEB_OAUTH_KEY'],
-            resource_owner_secret=self.config['SS_WEB_OAUTH_SECRET'],
-        )
+        # TODO:  rework these stats
         stats = {
             'success': [],
             'failure': [],
             'warning': [],
             'puts': [],
         }
-        url = self._url.format(self.config['SS_WEB_SERVER_HOST'])
+        url = self._url.format(self._config['SS_WEB_SERVER_HOST'])
 
         for spot in self:
             if not spot.validate():
@@ -139,13 +136,12 @@ class Spots:
                 continue
             
             headers = {
-                "X-OAuth-User": "labstats_daemon",
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                'X-OAuth-User': self._config['SS_WEB_USER'],
+                'If-Match': spot['etag'],
             }
             resp = requests.put(
                 url=f"{url}/{spot['id']}",
-                auth=client_oauth,
+                auth=self._oauth,
                 json=spot.raw(),
                 headers=headers,
             )
@@ -199,11 +195,17 @@ class Spots:
 
     @classmethod
     def from_spotseeker_server(cls, config) -> 'Spots':
-        if 'SS_WEB_SERVER_HOST' not in config:
-            raise Exception("Required setting missing: SS_WEB_SERVER_HOST")
+        if (
+            'SS_WEB_SERVER_HOST' not in config or
+            'SS_WEB_OAUTH_KEY' not in config or
+            'SS_WEB_OAUTH_SECRET' not in config
+        ):
+            raise Exception("Some required setting missing")
 
+        oauth = OAuth1(config['SS_WEB_OAUTH_KEY'], config['SS_WEB_OAUTH_SECRET'])
         spots_json_arr = requests.get(
-            f"{cls._url.format(config['SS_WEB_SERVER_HOST'])}/?{cls._filter}"
+            f"{cls._url.format(config['SS_WEB_SERVER_HOST'])}/?{cls._filter}",
+            auth=oauth,
         ).json()
-        return cls(spots_json_arr, config)
+        return cls(spots_json_arr, config, oauth)
     
